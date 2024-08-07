@@ -1,0 +1,135 @@
+MAC PROTECAO
+S1(config)# interface f0/1
+S1(config-if)# switchport mode access
+S1(config-if)# switchport port-security
+S1(config-if)# switchport port-security maximum 3
+S1(config-if)# switchport port-security mac-address aaaa.bbbb.1234
+S1(config-if)# switchport port-security mac-address sticky 
+
+S1(config)# interface fa0/1
+S1(config-if)# switchport port-security aging time 10 
+S1(config-if)# switchport port-security aging type inactivity 
+S1(config-if)# end
+
+
+S1(config)# interface f0/1
+S1(config-if)# switchport port-security violation restrict
+S1(config-if)# switchport port-security protect
+S1(config-if)# switchport port-security shutdown
+S1(config-if)# end
+
+
+S1# show port-security
+S1# show port-security interface f0/1
+S1# show port-security address
+mac address-table notification
+
+
+VLAN FALSO
+S1(config)# interface range fa0/1 - 16
+S1(config-if-range)# switchport mode access
+S1(config-if-range)# exit
+S1(config)# 
+S1(config)# interface range fa0/17 - 20
+S1(config-if-range)# switchport mode access
+S1(config-if-range)# switchport access vlan 1000
+S1(config-if-range)# shutdown
+S1(config-if-range)# exit
+S1(config)# 
+S1(config)# interface range fa0/21 - 24
+S1(config-if-range)# switchport mode trunk
+S1(config-if-range)# switchport nonegotiate
+S1(config-if-range)# switchport trunk native vlan 999
+S1(config-if-range)# end
+S1#
+
+PROXY PVLAN
+
+R1(config)# ip access-list extended PVLAN
+R1(config-ext-nacl)# deny ip 172.16.0.0 0.0.0.255 172.16.0.0 0.0.0.255  
+R1(config-ext-nacl)# permit ip any any
+R1(config-ext-nacl)# interface g0/0
+R1(config-if)# ip access-group PVLAN in
+R1(config-if)#
+
+BORDA PVLAN
+show interfaces interface-id
+S1(config)# interface f0/1
+switchport protected
+
+DHCP SNOOPING
+
+S1(config)# ip dhcp snooping
+S1(config)# interface f0/1
+S1(config-if)# ip dhcp snooping trust
+S1(config-if)# exit
+S1(config)# interface range f0/5 - 24
+S1(config-if-range)# ip dhcp snooping limit rate 6
+S1(config-if-range)# exit
+S1(config)# ip dhcp snooping vlan 5,10,50-52
+S1(config)# end
+
+DAI
+
+S1(config)# ip dhcp snooping
+S1(config)# ip dhcp snooping vlan 10
+S1(config)# ip arp inspection vlan 10
+S1(config)# interface fa0/24
+S1(config-if)# ip dhcp snooping trust
+S1(config-if)# ip arp inspection trust
+
+S1(config)# ip arp inspection validate src-mac
+S1(config)# ip arp inspection validate dst-mac
+S1(config)# ip arp inspection validate ip
+S1(config)# do show run | include validate
+ip arp inspection validate ip 
+S1(config)# ip arp inspection validate src-mac dst-mac ip
+S1(config)# do show run | include validate
+ip arp inspection validate src-mac dst-mac ip 
+S1(config)#
+
+VERIFICADOR DE IP
+
+S1(config)# interface range fastethernet 0/1 - 2
+S1(config-if-range)# ip verify source
+S1(config-if-range)# show ip verify source
+S1(config-if-range)# end
+S1#
+
+S1# show ip verify source
+
+STP
+
+S2(config)# interface f0/1
+S2(config-if)# spanning-tree cost 25
+S2# show spanning-tree
+
+
+S1(config)# spanning-tree VLAN 1 root primary
+S2(config)# spanning-tree vlan 1 root secondary
+
+S3(config)# spanning-tree VLAN 1 priority 24576
+S3#  show spanning-tree
+
+STP ATAQUE
+
+S1(config)# interface fa0/1
+S1(config-if)# switchport mode access
+S1(config-if)# spanning-tree portfast
+S1(config-if)#spanning-tree guard root
+S1(config-if)# spanning-tree bpduguard enable
+
+S1(config)# spanning-tree portfast default
+S1(config)# interface fa0/1
+S1(config)# spanning-tree portfast bpduguard default
+S1(config)# spanning-tree loopguard default
+
+errdisable recovery cause bpduguard
+
+S1# show running-config | begin span
+S1# show spanning-tree summary
+S1# show running-config interface comando type/number
+S1# Show spanning-tree interfacetype/number detail
+
+spanning-tree inconsistent ports
+spanning-tree guard root
