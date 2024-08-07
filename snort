@@ -1,0 +1,77 @@
+R1# virtual-service install name MYIPS package flash:iosxe-utd.16.09.06.1.0.10_SV29130_XE_16_9.ova
+Installing package 'bootflash:/iosxe-utd.16.09.06.1.0.10_SV29130_XE_16_9.ova' for virtual-service 'MYIPS'. Once the install has finished, the VM may be activated. Use 'show virtual-service list' for progress.
+
+R1# configure terminal
+R1(config)# interface VirtualPortGroup0
+R1(config-if)# description Management interface
+R1(config-if)# ip address 209.165.201.1 255.255.255.252
+R1(config-if)# exit
+R1(config)# 
+*Oct  5 08:13:10.970: %LINEPROTO-5-UPDOWN: Line protocol on Interface VirtualPortGroup0, changed state to up
+R1(config)# interface VirtualPortGroup1
+R1(config-if)# description Data interface
+R1(config-if)# ip address 192.168.0.1 255.255.255.252
+R1(config-if)# exit
+R1(config)# 
+*Oct  5 08:13:12.921: %LINEPROTO-5-UPDOWN: Line protocol on Interface VirtualPortGroup1, changed state to up 
+R1#
+
+R1(config)# virtual-service MYIPS
+R1(config-virt-serv)# vnic gateway VirtualPortGroup0
+R1(config-virt-serv-vnic)# guest ip address 209.165.201.2
+R1(config-virt-serv-vnic)# exit
+R1(config-virt-serv)# vnic gateway VirtualPortGroup1
+R1(config-virt-serv-vnic)# guest ip address 192.168.0.2
+R1(config-virt-serv-vnic)# exit
+R1(config-virt-serv)# activate
+
+R1(config)# utd engine standard
+R1(config-utd-eng-std)# logging host 10.10.10.254
+R1(config-utd-eng-std)# logging syslog
+R1(config-utd-eng-std)# 
+R1(config-utd-eng-std)# threat-inspection
+R1(config-utd-engstd-insp)# threat protection
+R1(config-utd-engstd-insp)# policy balanced
+R1(config-utd-engstd-insp)# 
+R1(config-utd-engstd-insp)# signature update occur-at daily 0 0
+R1(config-utd-engstd-insp)# signature update server cisco username Bob password class
+R1(config-utd-engstd-insp)# logging level warning
+R1(config-utd-engstd-insp)# 
+R1(config-utd-engstd-insp)# exit
+R1(config-utd-eng-std)# exit
+R1(config)#
+
+R1(config)# utd
+R1(config-utd)# all-interfaces
+R1(config-utd)# 
+R1(config-utd)# engine standard
+R1(config-engine-std)# fail close
+R1(config-engine-std)# exit
+R1(config-utd)# exit
+R1(config)#
+
+CASO DE FALSO POSITIVO 
+
+R1(config)# interface G0/0/0
+R1(config-if)# utd enable
+R1(config-if)# exit
+R1(config)# interface G0/0/1
+R1(config-if)# utd enable
+R1(config-if)# exit
+R1(config)#
+
+R1(config)# utd threat-inspection whitelist
+R1(config-utd-whitelist)# signature id 21555 comment traffic from Branch 1
+R1(config-utd-whitelist)#
+
+R1(config)# utd threat-inspection whitelist
+R1(config-utd-whitelist)# signature id 21555 comment traffic from Branch 1
+R1(config-utd-whitelist)#
+
+SHOW
+
+show virtual-service list - O comando exibe uma visão geral dos recursos que são utilizados pelos aplicativos.
+show virtual-service detail - O comando exibe uma lista de recursos que estão comprometidos com um aplicativo específico, incluindo dispositivos conectados.
+show utd engine standard config - O comando exibe a configuração UTD.
+show utd engine standard status - O comando exibe o status do mecanismo UTD.
+show platform hardware qfp active feature utd stats - O comando verifica o plano de dados. Ele verifica incrementos para encap, decap, redirecionamento e rejeição e exibe uma integridade de “Verde”.
