@@ -1,0 +1,87 @@
+R1(config)# zone security PRIVATE 
+R1(config-sec-zone)# exit
+R1(config)# zone security PUBLIC 
+R1(config-sec-zone)# exit
+R1(config)# 
+
+R1(config)# class-map type inspect match-any HTTP-TRAFFIC 
+R1(config-cmap)# match protocol http
+R1(config-cmap)# match protocol https
+R1(config-cmap)# match protocol dns
+
+R1(config)# policy-map type inspect PRIV-TO-PUB-POLICY
+R1(config-pmap)# class type inspect HTTP-TRAFFIC
+R1(config-pmap-c)# inspect 
+
+R1(config)# zone-pair security PRIV-PUB source PRIVATE destination PUBLIC
+R1(config-sec-zone-pair)# service-policy type inspect PRIV-TO-PUB-POLICY 
+
+R1(config)# interface GigabitEthernet 0/0
+R1(config-if)# zone-member security PRIVATE
+R1(config-if)# interface Serial 0/0/0
+R1(config-if)# zone-member security PUBLIC
+
+R1# show run | begin class-map 
+
+R1# show policy-map type inspect zone-pair sessions
+
+policy exists on zp PRIV-PUB 
+  Zone-pair: PRIV-PUB 
+ 
+  Service-policy inspect : PRIV-TO-PUB-POLICY 
+ 
+    Class-map: HTTP-TRAFFIC (match-any) 
+      Match: protocol http 
+        12 packets, 384 bytes 
+        30 second rate 0 bps 
+      Match: protocol https 
+        5 packets, 160 bytes 
+        30 second rate 0 bps 
+      Match: protocol dns 
+        0 packets, 0 bytes 
+        30 second rate 0 bps 
+ 
+Inspect 
+ 
+  Number of Established Sessions = 1 
+  Established Sessions 
+   Session 2204E220 (192.168.1.3:1049)=>(10.1.1.2:443) https:tcp 
+  SIS_OPEN/TCP_CLOSEWAIT 
+	  Created 00:00:14, Last heard 00:00:11 
+	  Bytes sent (initiator:responder) [821:1431] 
+ 
+ 
+    Class-map: class-default (match-any) 
+      Match: any 
+      Drop 
+        4 packets, 160 bytes 
+
+R1# show class-map type inspect
+Class Map type inspect match-any HTTP-TRAFFIC (id 1) 
+   Match protocol http 
+   Match protocol https 
+   Match protocol dns 
+ 
+R1# show zone security
+zone self 
+Description: System Defined Zone 
+ 
+zone PRIVATE 
+ Member Interfaces: 
+ GigabitEthernet0/0 
+ 
+zone PUBLIC 
+ Member Interfaces: 
+ Serial0/0/0 
+ 
+R1# show zone-pair security
+Zone-pair name PRIV-PUB 
+    Source-Zone PRIVATE  Destination-Zone PUBLIC 
+    service-policy PRIV-TO-PUB-POLICY 
+ 
+R1# show policy-map type inspect
+Policy Map type inspect PRIV-TO-PUB-POLICY 
+    Class HTTP-TRAFFIC 
+      Inspect 
+    Class class-default 
+      Drop
