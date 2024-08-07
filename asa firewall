@@ -1,0 +1,300 @@
+CONFIG BASICAS
+
+ciscoasa(config)# hostname NETSEC-ASA   
+NETSEC-ASA(config)# domain-name netsec.com   
+NETSEC-ASA(config)# enable password Cisco#123   
+NETSEC-ASA(config)#    
+NETSEC-ASA(config)# banner motd -----------------------------------------------    
+NETSEC-ASA(config)# banner motd Authorized access only!    
+NETSEC-ASA(config)# banner motd You have logged into a secure device.    
+NETSEC-ASA(config)# banner motd -----------------------------------------------    
+NETSEC-ASA(config)# banner motd   
+NETSEC-ASA(config)# exit
+
+NETSEC-ASA(config)# key config-key password-encryption cisco123
+NETSEC-ASA(config)# password encryption aes
+NETSEC-ASA(config)# exit
+NETSEC-ASA# show password encryption
+NETSEC-ASA# write
+
+INTERFACES
+
+NETSEC-ASA(config)# interface g1/1   
+NETSEC-ASA(config-if)# nameif OUTSIDE   
+INFO: Security level for "OUTSIDE" set to 0 by default.   
+NETSEC-ASA(config-if)# security-level 0   
+NETSEC-ASA(config-if)# ip address 209.165.200.225 255.255.255.252    
+NETSEC-ASA(config-if)# no shutdown   
+NETSEC-ASA(config-if)# interface g1/2   
+NETSEC-ASA(config-if)# nameif INSIDE   
+INFO: Security level for "INSIDE" set to 100 by default.   
+NETSEC-ASA(config-if)# security-level 100   
+NETSEC-ASA(config-if)# ip address 192.168.1.1 255.255.255.0    
+NETSEC-ASA(config-if)# no shutdown   
+NETSEC-ASA(config-if)# interface g1/3   
+NETSEC-ASA(config-if)# nameif DMZ   
+INFO: Security level for "DMZ" set to 0 by default.   
+NETSEC-ASA(config-if)# security-level 50   
+NETSEC-ASA(config-if)# ip address 192.168.2.1 255.255.255.0    
+NETSEC-ASA(config-if)# no shutdown   
+NETSEC-ASA(config-if)# exit   
+NETSEC-ASA(config)#
+NETSEC-ASA(config-if)# show interface ip brief
+
+ROUTE
+
+NETSEC-ASA(config)# route OUTSIDE 0.0.0.0 0.0.0.0 209.165.200.226    
+NETSEC-ASA(config)#    
+NETSEC-ASA(config)# show route | begin Gateway  
+
+TELNET
+aaa authentication telnet console LOCAL - Acesso com banco de dados local.
+
+NETSEC-ASA(config)# password cisco   
+NETSEC-ASA(config)# telnet 192.168.1.3 255.255.255.255 INSIDE   
+NETSEC-ASA(config)# telnet timeout 3   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# show run telnet  
+clear configure telnet - Remove telnet
+
+SSH
+
+NETSEC-ASA(config)# username ADMIN password class
+NETSEC-ASA(config)# aaa authentication ssh console LOCAL
+NETSEC-ASA(config)# crypto key generate rsa modulus 2048
+NETSEC-ASA(config)# ssh 192.168.1.3 255.255.255.255 INSIDE
+NETSEC-ASA(config)# ssh 192.168.1.4 255.255.255.255 INSIDE
+NETSEC-ASA(config)# ssh 172.16.1.3 255.255.255.255 OUTSIDE
+NETSEC-ASA(config)# ssh version 2
+NETSEC-ASA(config)# show ssh
+
+clear configure ssh - remove SSH
+
+NTP
+
+NETSEC-ASA(config)# ntp authenticate   
+NETSEC-ASA(config)# ntp trusted-key 1   
+NETSEC-ASA(config)# ntp authentication-key 1 sha-256 cisco123   
+NETSEC-ASA(config)# ntp server 192.168.1.254  
+
+DHCP
+
+NETSEC-ASA(config)# dhcpd address 192.168.1.10-192.168.1.250 INSIDE   
+NETSEC-ASA(config)# dhcpd lease 1800   
+NETSEC-ASA(config)#
+
+clear dhcpd binding - Limpar
+
+show dhcpd state - Exibe o estado atual do DHCP para interfaces internas e externas.
+show dhcpd binding - Exibe as ligações DHCP atuais de usuários internos.
+show dhcpd statistics - Exibe as estatísticas atuais do DHCP.
+
+OBJETOS DE REDE
+
+clear config object network - Limpa todas as configurações.
+
+NetSec-ASA(config)# object network EXAMPLE-1
+NetSec-ASA(config-network-object)# host 192.168.1.3
+NetSec-ASA(config-network-object)# exit
+NetSec-ASA(config)# show run object
+object network EXAMPLE-1
+ host 192.168.1.3
+NetSec-ASA(config)# object network EXAMPLE-1
+NetSec-ASA(config-network-object)# range 192.168.1.10 192.168.1.20
+NetSec-ASA(config-network-object)# exit
+NetSec-ASA(config)# show run object                
+object network EXAMPLE-1
+ range 192.168.1.10 192.168.1.20
+NetSec-ASA(config)# 
+
+OBJETOS DE SERVIÇOS
+
+clear config object service - Limpa todas as configuracoes
+
+NETSEC-ASA(config)# object service SERV-1   
+NETSEC-ASA(config-service-object)# service tcp destination eq ftp   
+NETSEC-ASA(config-service-object)# service tcp destination eq www   
+NETSEC-ASA(config-service-object)# exit   
+NETSEC-ASA(config)# show run object service   
+object service SERV-1    
+ service tcp destination eq www   
+NETSEC-ASA(config)#
+
+GRUPOS DE OBJETOS COMUNS
+
+clear configure object-group - Limpa todas as configuracoes
+
+NETSEC-ASA(config)# object-group network ADMIN-HOST   
+NETSEC-ASA(config-network-object-group)# description Administrative hosts   
+NETSEC-ASA(config-network-object-group)# network-object host 192.168.1.3   
+NETSEC-ASA(config-network-object-group)# network-object host 192.168.1.4   
+NETSEC-ASA(config-network-object-group)# exit   
+NETSEC-ASA(config)# object-group network ALL-HOSTS   
+NETSEC-ASA(config-network-object-group)# description All inside hosts   
+NETSEC-ASA(config-network-object-group)# network-object 192.168.1.32 255.255.255.240   
+NETSEC-ASA(config-network-object-group)# group-object ADMIN-HOST   
+NETSEC-ASA(config-network-object-group)# exit   
+NETSEC-ASA(config)# show run object-group   
+object-group network ADMIN-HOST    
+ description Administrative host IP addresses    
+ network-object host 192.168.1.3    
+ network-object host 192.168.1.4    
+object-group network ALL-HOSTS    
+ network-object 192.168.1.32 255.255.255.240    
+ group-object ADMIN-HOST    
+NETSEC-ASA(config)#
+
+same-security-traffic permit inter-interface
+same-security-traffic permit intra-interface
+
+ACL
+
+Para verificar ACLs, use os comandos show access-list e show running-config access-list .
+
+Para apagar uma ACL configurada, use o comando clear configure access-list id .
+
+NETSEC-ASA(config)# access-list ACL-IN extended deny tcp any host 209.165.201.29 eq www    
+NETSEC-ASA(config)# access-list ACL-IN extended permit ip any any    
+NETSEC-ASA(config)# access-group ACL-IN in interface INSIDE
+
+NETSEC-ASA(config)# access-list ACL-IN extended deny ip 192.168.1.0 255.255.255.0 209.165.201.0 255.255.255.224   
+NETSEC-ASA(config)# access-list ACL-IN extended permit ip any any   
+NETSEC-ASA(config)# access-group ACL-IN in interface INSIDE
+
+OBJETOS
+
+NETSEC-ASA(config)# object-group network NET-HOSTS   
+NETSEC-ASA(config-network-object-group)# description OG matches PC-A and PC-B   
+NETSEC-ASA(config-network-object-group)# network-object host 209.165.201.1   
+NETSEC-ASA(config-network-object-group)# network-object host 209.165.201.2   
+NETSEC-ASA(config-network-object-group)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# object-group network SERVERS   
+NETSEC-ASA(config-network-object-group)# description OG matches Web / Email Servers   
+NETSEC-ASA(config-network-object-group)# network-object host 209.165.202.131   
+NETSEC-ASA(config-network-object-group)# network-object host 209.165.202.132   
+NETSEC-ASA(config-network-object-group)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# object-group service HTTP-SMTP tcp   
+NETSEC-ASA(config-service-object-group)# description OG matches SMTP / WEB traffic   
+NETSEC-ASA(config-service-object-group)# port-object eq smtp   
+NETSEC-ASA(config-service-object-group)# port-object eq www   
+NETSEC-ASA(config-service-object-group)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# access-list ACL-IN remark Only permit PC-A / PC-B -> Internal Servers   
+NETSEC-ASA(config)# access-list ACL-IN extended permit tcp object-group NET-HOSTS object-group SERVERS object-group HTTP-SMTP
+NETSEC-ASA(config)# show running-config access-list 
+
+NAT
+
+NETSEC-ASA(config)# show xlate
+NETSEC-ASA(config)# show nat
+NETSEC-ASA(config)# show nat detail
+
+NAT DINAMICO
+
+NETSEC-ASA(config)# object network PUBLIC   
+NETSEC-ASA(config-network-object)# range 209.165.200.240 209.165.200.248   
+NETSEC-ASA(config-network-object)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# object network DYNAMIC-NAT   
+NETSEC-ASA(config-network-object)# subnet 192.168.1.0 255.255.255.224   
+NETSEC-ASA(config-network-object)# nat (INSIDE,OUTSIDE) dynamic PUBLIC   
+NETSEC-ASA(config-network-object)# end   
+NETSEC-ASA#
+
+ICMP
+
+NETSEC-ASA(config)# policy-map global_policy   
+NETSEC-ASA(config-pmap)# class inspection_default   
+NETSEC-ASA(config-pmap-c)# access-list ICMPACL extended permit icmp any any   
+NETSEC-ASA(config)# access-group ICMPACL in interface OUTSIDE   
+NETSEC-ASA(config)#
+
+NAT ESTATICO 
+
+NETSEC-ASA(config)#clear nat counters 
+
+NETSEC-ASA(config)# object network DMZ-SERVER   
+NETSEC-ASA(config-network-object)# host 192.168.2.3   
+NETSEC-ASA(config-network-object)# nat (DMZ,OUTSIDE) static 209.165.200.227   
+NETSEC-ASA(config-network-object)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# access-list OUTSIDE-DMZ extended permit ip any host 192.168.2.3   
+NETSEC-ASA(config)# access-group OUTSIDE-DMZ in interface OUTSIDE   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# policy-map global_policy   
+NETSEC-ASA(config-pmap)# class inspection_default   
+NETSEC-ASA(config-pmap-c)# access-list ICMPACL extended permit icmp any any   
+NETSEC-ASA(config)# access-group ICMPACL in interface DMZ   
+
+
+AAA
+
+clear config aaa-server
+how running-config aaa-server
+
+NETSEC-ASA(config)# username Admin password class privilege 15   
+NETSEC-ASA(config)# show run username   
+NETSEC-ASA(config)# aaa-server TACACS-SVR protocol tacacs+   
+NETSEC-ASA(config-aaa-server-group)# aaa-server TACACS-SVR (DMZ) host 192.168.2.3   
+NETSEC-ASA(config-aaa-server-host)# exit   
+NETSEC-ASA(config)# show run aaa-server   
+
+NETSEC-ASA(config)# aaa authentication serial console TACACS-SVR LOCAL 
+NETSEC-ASA(config)# aaa authentication ssh console TACACS-SVR LOCAL   
+NETSEC-ASA(config)# aaa authentication http console TACACS-SVR LOCAL   
+NETSEC-ASA(config)# aaa authentication telnet console TACACS-SVR LOCAL   
+NETSEC-ASA(config)# aaa authentication enable console TACACS-SVR LOCAL
+
+MPF 
+
+show running-config class-map
+clear configure class-map
+
+show running-config policy-map
+clear configure policy-map
+
+CLASSE
+
+NETSEC-ASA(config)# access-list UDP permit udp any any   
+NETSEC-ASA(config)# access-list TCP permit tcp any any   
+NETSEC-ASA(config)# access-list SERVER permit ip any host 10.1.1.1   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# class-map ALL-TCP   
+NETSEC-ASA(config-cmap)# description This class-map matches all TCP traffic   
+NETSEC-ASA(config-cmap)# match access-list TCP   
+NETSEC-ASA(config-cmap)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# class-map ALL-UDP   
+NETSEC-ASA(config-cmap)# description This class-map matches all UDP traffic   
+NETSEC-ASA(config-cmap)# match access-list UDP   
+NETSEC-ASA(config-cmap)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# class-map ALL-HTTP   
+NETSEC-ASA(config-cmap)# description This class-map matches all HTTP traffic   
+NETSEC-ASA(config-cmap)# match port TCP eq http   
+NETSEC-ASA(config-cmap)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# class-map TO-SERVER   
+NETSEC-ASA(config-cmap)# description Class map matches traffic  10.1.1.1   
+NETSEC-ASA(config-cmap)# match access-list SERVER   
+NETSEC-ASA(config-cmap)# exit   
+NETSEC-ASA(config)#
+
+POLITICA
+
+NETSEC-ASA(config)# access-list TFTP-TRAFFIC permit udp any any eq 69   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# class-map CLASS-TFTP   
+NETSEC-ASA(config-cmap)# match access-list TFTP-TRAFFIC   
+NETSEC-ASA(config-cmap)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# policy-map POLICY-TFTP   
+NETSEC-ASA(config-pmap)# class CLASS-TFTP   
+NETSEC-ASA(config-pmap-c)# inspect tftp   
+NETSEC-ASA(config-pmap-c)# exit   
+NETSEC-ASA(config-pmap)# exit   
+NETSEC-ASA(config)#     
+NETSEC-ASA(config)# service-policy POLICY-TFTP global   
+NETSEC-ASA(config)#
