@@ -1,0 +1,189 @@
+USUARIOS
+do show run | include username
+show running-config | include username
+Router(config)# username name algorithm-type { md5 | scrypt | sha256 |  secret } secret unencrypted password
+
+OSPF 
+R2(config)# router ospf 1
+R2(config-router)# network 10.1.1.0 0.0.0.3 area 0
+R1(config-router)# passive-interface g0/0/0
+
+R1# show ip route
+R1# show ip ospf neighbor
+
+OSPF SHA-256
+R1(config)# key chain SHA256 
+R1(config-keychain)# key 1 
+R1(config-keychain-key)# key-string ospfSHA256 
+R1(config-keychain-key)# cryptographic-algorithm hmac-sha-256 
+R1(config-keychain-key)# exit 
+R1(config-keychain)# exit 
+R1(config)# interface s0/0/0 
+R1(config-if)# ip ospf authentication key-chain SHA256 
+
+SSH
+Router# configure terminal
+Router(config)# hostname R1
+R1(config)# ip domain name span.com
+R1(config)# crypto key generate rsa general-keys modulus 1024
+R2(config)#username Bob algorithm-type scrypt secret cisco54321
+R1(config)# line vty 0 4
+R1(config-line)# login local
+R1(config-line)# transport input ssh
+R1(config-line)# exit
+R2(config)#ip ssh version 2
+R2(config)#ip ssh authentication-retries 2
+R2(config)#ip ssh time-out 60
+
+R1# show crypto key mypubkey rsa
+R1(config)# crypto key zeroize rsa
+
+PRIVILEGIOS
+R1(config)# privilege exec level 5 ping
+R1(config)# enable algorithm-type scrypt secret level 5 cisco5
+R1(config)# username SUPPORT privilege 5 algorithm-type scrypt secret cisco5
+
+R1(config)# privilege exec level 10 reload  
+R1(config)# enable algorithm-type scrypt secret level 10 cisco10  
+R1(config)# username JR-ADMIN privilege 10 algorithm-type scrypt secret cisco10  
+
+R1(config)# enable algorithm-type scrypt secret level 15 cisco123
+R1(config)# username ADMIN privilege 15 algorithm-type scrypt secret cisco123
+
+R1# show privilege
+
+VIEW / SUPER VIEW
+
+R1(config)# aaa new-model
+R1(config)# parser view SHOWVIEW
+R1(config-view)# secret cisco
+R1(config-view)# commands exec include show
+R1(config-view)# exit
+
+R1(config)#  parser view VERIFYVIEW 
+R1(config-view)#  secret cisco5 
+R1(config-view)#  commands exec include ping 
+R1(config-view)# exit
+
+R1(config)# parser view REBOOTVIEW
+R1(config-view)# secret cisco10
+R1(config-view)# commands exec include reload
+R1(config-view)# exit
+R1(config)#
+
+R1(config)# parser view USER superview
+R1(config-view)# secret cisco
+R1(config-view)# view SHOWVIEW
+R1(config-view)# exit
+
+R1(config)# parser view SUPPORT superview 
+R1(config-view)# secret cisco1
+R1(config-view)# view SHOWVIEW 
+R1(config-view)# view VERIFYVIEW 
+R1(config-view)# exit
+ 
+R1(config)# parser view JR-ADMIN superview
+R1(config-view)# secret cisco2
+R1(config-view)# view SHOWVIEW
+R1(config-view)# view VERIFYVIEW
+R1(config-view)# view REBOOTVIEW
+R1(config-view)# exit
+
+R1# enable view usuario
+R1# show parser view 
+R1# show running-config | section superview
+
+IOS SECURE
+R1(config)# secure boot-image
+R1(config)# secure boot-config
+
+R1# show secure bootset
+
+SNMP
+R1(config)# ip access-list standard PERMIT-ADMIN 
+R1(config-std-nacl)# permit 192.168.1.0 0.0.0.255  
+R1(config-std-nacl)# exit 
+R1(config)# snmp-server view SNMP-RO iso included 
+R1(config)# snmp-server group ADMIN v3 priv read SNMP-RO access PERMIT-ADMIN  
+R1(config)# snmp-server user BOB ADMIN v3 auth sha cisco12345 priv aes 128 cisco54321  
+R1(config)# end 
+
+SYSLOG
+service timestamps log datetime msec
+R1(config)# logging host 192.168.1.3
+
+AAA
+
+R1(config)# username JR-ADMIN algorithm-type scrypt secret Str0ng5rPa55w0rd
+R1(config)# username ADMIN algorithm-type scrypt secret Str0ng5rPa55w0rd  
+R1(config)# aaa new-model
+R1(config)# aaa authentication login default local-case
+
+R1(config)# username JR-ADMIN algorithm-type scrypt secret Str0ng5rPa55w0rd 
+R1(config)# username ADMIN algorithm-type scrypt secret Str0ng5rPa55w0rd
+R1(config)# aaa new-model
+R1(config)# aaa authentication login default local-case enable
+R1(config)# aaa authentication login SSH-LOGIN local-case
+R1(config)# line vty 0 4
+R1(config-line)# login authentication SSH-LOGIN
+
+R1# show aaa sessions
+R1# show aaa local user lockout
+R1# clear aaa local user lockout.
+
+Router(config)# aaa local authentication attempts max-fail [number-of-unsuccessful-attempts]
+
+TACAS 
+R1(config)# aaa new-model 
+R1(config)# 
+R1(config)# tacacs server Server-T
+R1(config-server-tacacs)# address ipv4 192.168.1.101
+R1(config-server-tacacs)# single-connection
+R1(config-server-tacacs)# key TACACS-Pa55w0rd
+R1(config-server-tacacs)# exit
+R1(config)#
+
+RADIUS R1
+
+(config)# aaa new-model
+R1(config)# 
+R1(config)# radius server SERVER-R
+R1(config-radius-server)# address ipv4 192.168.1.100 auth-port 1812 acct-port 1813
+R1(config-radius-server)# key RADIUS-Pa55w0rd
+R1(config-radius-server)# exit 
+R1(config)#
+
+R1(config)# aaa new-model
+R1(config)# 
+R1(config)# tacacs server Server-T
+R1(config-server-tacacs)# address ipv4 192.168.1.100
+R1(config-server-tacacs)# single-connection
+R1(config-server-tacacs)# key TACACS-Pa55w0rd
+R1(config-server-tacacs)# exit
+R1(config)# 
+R1(config)# radius server SERVER-R
+R1(config-radius-server)# address ipv4 192.168.1.101 auth-port 1812 acct-port 1813
+R1(config-radius-server)# key RADIUS-Pa55w0rd 
+R1(config-radius-server)# exit
+R1(config)#
+R1(config)# aaa authentication login default group tacacs+ group radius local-case
+
+AAA AUTH
+
+Router(config)# aaa authorization (network | exec | commands level) {default | list-name} method1… [method4]
+
+R1(config)# username JR-ADMIN algorithm-type scrypt secret Str0ng5rPa55w0rd 
+R1(config)# username ADMIN algorithm-type scrypt secret Str0ng5rPa55w0rd 
+R1(config)# aaa new-model 
+R1(config)# aaa authorization exec default group tacacs+ 
+R1(config)# aaa authorization network default group tacacs+
+
+
+R1(config)# username JR-ADMIN algorithm-type scrypt secret Str0ng5rPa5w0rd 
+R1(config)# username ADMIN algorithm-type scrypt secret Str0ng5rPa55w0rd 
+R1(config)# aaa new-model
+R1(config)# aaa authentication login default group tacacs+
+R1(config)# aaa authorization exec default group tacacs+
+R1(config)# aaa authorization network default group tacacs+
+R1(config)# aaa accounting exec default start-stop group tacacs+
+R1(config)# aaa accounting network default start-stop group tacacs+
